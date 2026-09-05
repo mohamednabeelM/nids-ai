@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIDS — AI Network Intrusion Detection</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:        #040d1a;
+    --card:      #071428;
+    --border:    #0e2a4a;
+    --accent:    #0ea5e9;
+    --accent2:   #38bdf8;
+    --green:     #10b981;
+    --red:       #ef4444;
+    --amber:     #f59e0b;
+    --blue:      #3b82f6;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --live:      #39ff14;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    --font-ui:   'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Grid background ─────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(14,165,233,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(14,165,233,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; padding: 0 24px 32px; }
+
+  /* ── Header ─────────────────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 0 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), #0284c7);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 0 18px rgba(14,165,233,.35);
+  }
+  .logo-text h1 {
+    font-size: 16px; font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--text);
+  }
+  .logo-text p {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: .06em; text-transform: uppercase;
+  }
+  .header-right {
+    display: flex; align-items: center; gap: 20px;
+  }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600;
+    color: var(--live);
+    font-family: var(--font-mono);
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    background: var(--live);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--live);
+    animation: pulse-live 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse-live {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .5; transform: scale(.8); }
+  }
+  .uptime {
+    font-family: var(--font-mono);
+    font-size: 12px; color: var(--muted);
+  }
+  #conn-status {
+    font-size: 11px; padding: 3px 8px;
+    border-radius: 4px; font-weight: 600;
+    background: rgba(16,185,129,.15);
+    color: var(--green);
+    border: 1px solid rgba(16,185,129,.3);
+  }
+  #conn-status.disconnected {
+    background: rgba(239,68,68,.15);
+    color: var(--red);
+    border-color: rgba(239,68,68,.3);
+  }
+
+  /* ── Stat Cards Row ────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-clr, var(--accent));
+  }
+  .stat-card.red   { --accent-clr: var(--red); }
+  .stat-card.amber { --accent-clr: var(--amber); }
+  .stat-card.green { --accent-clr: var(--green); }
+  .stat-card.blue  { --accent-clr: var(--blue); }
+  .stat-label {
+    font-size: 10px; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-family: var(--font-mono);
+    font-size: 26px; font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-sub {
+    font-size: 11px; color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ── Main Grid ──────────────────────────────────── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted);
+  }
+  .card-badge {
+    font-size: 10px; font-family: var(--font-mono);
+    padding: 2px 7px; border-radius: 4px;
+    background: rgba(14,165,233,.12);
+    color: var(--accent);
+    border: 1px solid rgba(14,165,233,.25);
+  }
+
+  /* ── Traffic Chart ──────────────────────────────── */
+  #traffic-chart { height: 180px !important; }
+
+  /* ── Attack Donut ───────────────────────────────── */
+  #attack-chart { height: 160px !important; }
+
+  /* ── Threat Pulse ───────────────────────────────── */
+  .pulse-wrap {
+    display: flex; align-items: center; justify-content: center;
+    height: 180px;
+    position: relative;
+  }
+  .pulse-rings {
+    position: relative;
+    width: 100px; height: 100px;
+  }
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: expand-ring linear infinite;
+    opacity: 0;
+  }
+  .ring:nth-child(1) { width: 30px; height: 30px;
+    border-color: var(--ring-clr, var(--accent));
+    animation-duration: 2s; animation-delay: 0s; }
+  .ring:nth-child(2) { width: 30px; height: 30px;
+    border-color: var(--ring-clr, var(--accent));
+    animation-duration: 2s; animation-delay: .67s; }
+  .ring:nth-child(3) { width: 30px; height: 30px;
+    border-color: var(--ring-clr, var(--accent));
+    animation-duration: 2s; animation-delay: 1.33s; }
+  @keyframes expand-ring {
+    0%   { width: 20px; height: 20px; opacity: .8; }
+    100% { width: 110px; height: 110px; opacity: 0; }
+  }
+  .pulse-core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--ring-clr, var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 0 20px var(--ring-clr, var(--accent));
+  }
+  .pulse-label {
+    position: absolute;
+    bottom: 12px; left: 0; right: 0;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--ring-clr, var(--accent));
+    text-shadow: 0 0 8px var(--ring-clr, var(--accent));
+  }
+  .threat-level.CRITICAL { --ring-clr: var(--red); }
+  .threat-level.HIGH     { --ring-clr: var(--amber); }
+  .threat-level.LOW      { --ring-clr: var(--green); }
+  .threat-level.CLEAN    { --ring-clr: var(--accent); }
+
+  /* ── Alert Feed ─────────────────────────────────── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 14px;
+  }
+  #alert-feed {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .alert-row {
+    display: grid;
+    grid-template-columns: 65px 1fr 1fr 80px 90px 80px 70px;
+    gap: 8px;
+    align-items: center;
+    padding: 9px 10px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    background: rgba(14,165,233,.04);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .alert-row:hover { background: rgba(14,165,233,.10); }
+  .sev-badge {
+    display: inline-block;
+    padding: 2px 6px; border-radius: 4px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: .05em;
+  }
+  .sev-CRITICAL { background: rgba(239,68,68,.2);  color: #ef4444; }
+  .sev-HIGH     { background: rgba(245,158,11,.2); color: #f59e0b; }
+  .sev-MEDIUM   { background: rgba(59,130,246,.2); color: #3b82f6; }
+  .sev-LOW      { background: rgba(16,185,129,.2); color: #10b981; }
+  .sev-CLEAN    { background: rgba(107,114,128,.15); color: #6b7280; }
+  .alert-ts  { color: var(--muted); font-size: 10px; }
+  .alert-label { font-weight: 700; }
+
+  /* ── Top Sources Table ──────────────────────────── */
+  .source-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    background: rgba(14,165,233,.04);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    font-family: var(--font-mono);
+  }
+  .source-ip   { color: var(--accent2); }
+  .source-bar-wrap {
+    flex: 1; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 10px;
+  }
+  .source-bar {
+    height: 100%; border-radius: 2px;
+    background: var(--accent);
+    transition: width .5s ease;
+  }
+  .source-cnt { color: var(--red); font-weight: 700; }
+
+  /* ── XAI Panel ──────────────────────────────────── */
+  #xai-panel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(4,13,26,.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  #xai-panel.open { display: flex; }
+  .xai-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: 560px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 24px;
+    position: relative;
+  }
+  .xai-close {
+    position: absolute; top: 16px; right: 16px;
+    background: none; border: none;
+    color: var(--muted); font-size: 20px;
+    cursor: pointer;
+    transition: color .15s;
+  }
+  .xai-close:hover { color: var(--text); }
+  .xai-title {
+    font-size: 14px; font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--accent);
+  }
+  .xai-feat-row {
+    margin-bottom: 12px;
+  }
+  .xai-feat-name {
+    display: flex; justify-content: space-between;
+    font-size: 11px; font-family: var(--font-mono);
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .xai-feat-pct { color: var(--accent); }
+  .xai-bar-wrap {
+    height: 6px; background: var(--border);
+    border-radius: 3px; overflow: hidden;
+  }
+  .xai-bar {
+    height: 100%; border-radius: 3px;
+    transition: width .6s ease;
+  }
+  .xai-bar.risk   { background: linear-gradient(90deg, var(--amber), var(--red)); }
+  .xai-bar.safe   { background: var(--green); }
+  .xai-summary {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(14,165,233,.07);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 11px; line-height: 1.6;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    white-space: pre-wrap;
+  }
+
+  /* ── Scrollbar ───────────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Alert header row ───────────────────────────── */
+  .alert-thead {
+    display: grid;
+    grid-template-columns: 65px 1fr 1fr 80px 90px 80px 70px;
+    gap: 8px;
+    padding: 6px 10px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+
+  .mitre-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    background: rgba(14,165,233,.12);
+    color: var(--accent);
+    border: 1px solid rgba(14,165,233,.3);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s;
+  }
+  .mitre-badge:hover {
+    background: rgba(14,165,233,.25);
+  }
+
+  .no-alerts {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ── Header ─────────────────────────────────────── -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      <div class="logo-text">
+        <h1>NIDS — AI Network Intrusion Detection</h1>
+        <p>Powered by Random Forest + Isolation Forest + XAI</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+      <span class="uptime" id="uptime">00:00:00</span>
+      <span id="conn-status">CONNECTED</span>
+    </div>
+  </header>
+
+  <!-- ── Stat Cards ────────────────────────────────── -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Packets / sec</div>
+      <div class="stat-value" id="pkt-sec">0</div>
+      <div class="stat-sub">Live traffic rate</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Critical Threats</div>
+      <div class="stat-value" id="cnt-critical">0</div>
+      <div class="stat-sub">DoS · U2R detected</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label">High Threats</div>
+      <div class="stat-value" id="cnt-high">0</div>
+      <div class="stat-sub">Probe · R2L detected</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Clean Traffic</div>
+      <div class="stat-value" id="clean-pct">0%</div>
+      <div class="stat-sub">Normal flows</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Total Flows</div>
+      <div class="stat-value" id="total-flows">0</div>
+      <div class="stat-sub">Analysed flows</div>
+    </div>
+  </div>
+
+  <!-- ── Main Grid ─────────────────────────────────── -->
+  <div class="main-grid">
+
+    <!-- Traffic Volume Chart -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Live Traffic Volume</span>
+        <span class="card-badge" id="pkt-rate-badge">0 pkt/s</span>
+      </div>
+      <canvas id="traffic-chart"></canvas>
+    </div>
+
+    <!-- Threat Pulse -->
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div class="card-header" style="width:100%">
+        <span class="card-title">Threat Level</span>
+      </div>
+      <div class="pulse-wrap">
+        <div class="pulse-rings threat-level CLEAN" id="pulse-rings">
+          <div class="ring"></div>
+          <div class="ring"></div>
+          <div class="ring"></div>
+          <div class="pulse-core" id="pulse-core">🛡️</div>
+          <div class="pulse-label" id="pulse-label">SCANNING</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attack Distribution Donut -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Attack Type Distribution</span>
+        <span class="card-badge" id="attack-total-badge">0 threats</span>
+      </div>
+      <canvas id="attack-chart"></canvas>
+    </div>
+
+    <!-- Top Sources -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Top Attacker IPs</span>
+      </div>
+      <div id="top-sources">
+        <div class="no-alerts" style="padding:20px;font-size:11px;">No threats yet</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Alert Feed ─────────────────────────────────── -->
+  <div class="card" style="margin-bottom:0">
+    <div class="card-header">
+      <span class="card-title">Live Alert Feed</span>
+      <span class="card-badge" id="alert-count-badge">0 alerts</span>
+    </div>
+    <div class="alert-thead">
+      <span>Severity</span>
+      <span>Source</span>
+      <span>Destination</span>
+      <span>Attack</span>
+      <span>MITRE ID</span>
+      <span>Confidence</span>
+      <span>Time</span>
+    </div>
+    <div id="alert-feed">
+      <div class="no-alerts">Monitoring network… alerts will appear here</div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- ── XAI Explanation Panel ─────────────────────── -->
+<div id="xai-panel">
+  <div class="xai-box">
+    <button class="xai-close" onclick="closeXAI()">✕</button>
+    <div class="xai-title">🔍 AI Explanation — Why was this flagged?</div>
+    <div id="xai-content">Loading…</div>
+  </div>
+</div>
+
+
+<script>
+// ── Socket.IO ────────────────────────────────────────────────────────────────
+const socket = io();
+const statusEl = document.getElementById('conn-status');
+
+socket.on('connect',    () => {
+  statusEl.textContent = 'CONNECTED';
+  statusEl.className   = '';
+});
+socket.on('disconnect', () => {
+  statusEl.textContent = 'DISCONNECTED';
+  statusEl.className   = 'disconnected';
+});
+socket.on('stats_update',  updateStats);
+socket.on('alerts_update', updateAlerts);
+
+// ── Traffic Chart ────────────────────────────────────────────────────────────
+const MAX_POINTS = 60;
+const trafficData = { labels: [], normal: [], threat: [] };
+
+const trafficChart = new Chart(
+  document.getElementById('traffic-chart').getContext('2d'),
+  {
+    type: 'line',
+    data: {
+      labels: trafficData.labels,
+      datasets: [
+        {
+          label: 'Normal',
+          data: trafficData.normal,
+          borderColor: '#0ea5e9',
+          backgroundColor: 'rgba(14,165,233,.08)',
+          tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2,
+        },
+        {
+          label: 'Threats',
+          data: trafficData.threat,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,.08)',
+          tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      scales: {
+        x: { display: false },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(255,255,255,.04)' },
+          ticks: { color: '#64748b', font: { size: 10 } },
+        },
+      },
+      plugins: {
+        legend: { labels: { color: '#64748b', font: { size: 10 } } },
+      },
+    },
+  }
+);
+
+// ── Attack Donut ─────────────────────────────────────────────────────────────
+const ATTACK_LABELS = [
+  'DoS','DDoS','Port Scan','Vuln Scan',
+  'Brute Force','Exploit','Web Attack','Infiltration','Exfiltration','Normal'
+];
+const ATTACK_COLOURS = [
+  '#ef4444','#dc2626','#3b82f6','#60a5fa',
+  '#f59e0b','#8b5cf6','#ec4899','#f97316','#14b8a6','#10b981'
+];
+const ATTACK_KEYS = [
+  'dos','ddos','port_scan','vuln_scan',
+  'brute_force','exploit','web_attack','infiltration','exfiltration','normal'
+];
+const attackChart = new Chart(
+  document.getElementById('attack-chart').getContext('2d'),
+  {
+    type: 'doughnut',
+    data: {
+      labels: ATTACK_LABELS,
+      datasets: [{
+        data: new Array(10).fill(0),
+        backgroundColor: ATTACK_COLOURS,
+        borderWidth: 0,
+        hoverOffset: 6,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#94a3b8', font: { size: 9 }, padding: 6, boxWidth: 10 },
+        },
+      },
+      animation: { duration: 400 },
+    },
+  }
+);
+
+// ── Update Functions ─────────────────────────────────────────────────────────
+let prevClean = 0;
+
+function updateStats(s) {
+  setText('pkt-sec',       s.packets_per_sec ?? 0);
+  setText('cnt-critical',  s.critical ?? 0);
+  setText('cnt-high',      s.high ?? 0);
+  setText('clean-pct',     (s.clean_pct ?? 0) + '%');
+  setText('total-flows',   s.total_flows ?? 0);
+  setText('uptime',        s.uptime ?? '00:00:00');
+  setText('pkt-rate-badge', (s.packets_per_sec ?? 0) + ' pkt/s');
+
+  // Traffic chart — push new point
+  const now = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const threats = (s.critical ?? 0) + (s.high ?? 0) + (s.medium ?? 0);
+  const clean   = s.clean ?? 0;
+  const newPts  = clean - prevClean;
+  prevClean     = clean;
+
+  trafficData.labels.push(now);
+  trafficData.normal.push(Math.max(newPts, 0));
+  trafficData.threat.push(threats);
+  if (trafficData.labels.length > MAX_POINTS) {
+    trafficData.labels.shift();
+    trafficData.normal.shift();
+    trafficData.threat.shift();
+  }
+  trafficChart.update('none');
+
+  // Attack donut — 10 classes
+  const types = s.attack_types ?? {};
+  attackChart.data.datasets[0].data = ATTACK_KEYS.map(k => types[k] ?? 0);
+  attackChart.update('none');
+
+  const totalThreats = threats;
+  setText('attack-total-badge', totalThreats + ' threats');
+
+  // Threat pulse
+  updatePulse(s);
+
+  // Top sources
+  renderSources(s.top_sources ?? []);
+}
+
+function updatePulse(s) {
+  const rings = document.getElementById('pulse-rings');
+  const core  = document.getElementById('pulse-core');
+  const label = document.getElementById('pulse-label');
+  const crit  = s.critical ?? 0;
+  const high  = s.high ?? 0;
+
+  rings.className = 'pulse-rings threat-level ';
+  if (crit > 0) {
+    rings.className += 'CRITICAL';
+    core.textContent  = '⚠️';
+    label.textContent = 'CRITICAL THREAT';
+  } else if (high > 0) {
+    rings.className += 'HIGH';
+    core.textContent  = '🔶';
+    label.textContent = 'HIGH ALERT';
+  } else {
+    rings.className += 'CLEAN';
+    core.textContent  = '🛡️';
+    label.textContent = 'NETWORK SECURE';
+  }
+}
+
+function updateAlerts(alerts) {
+  const feed = document.getElementById('alert-feed');
+  setText('alert-count-badge', alerts.length + ' alerts');
+
+  if (!alerts.length) {
+    feed.innerHTML = '<div class="no-alerts">Monitoring network… alerts will appear here</div>';
+    return;
+  }
+
+  feed.innerHTML = alerts.map(a => `
+    <div class="alert-row" onclick="showXAI('${a.id}', ${JSON.stringify(a.explanation).replace(/"/g, '&quot;')}, ${JSON.stringify(a.mitre||{}).replace(/"/g, '&quot;')})">
+      <span class="sev-badge sev-${a.severity}">${a.severity}</span>
+      <span>${esc(a.src)}</span>
+      <span>${esc(a.dst)}</span>
+      <span class="alert-label">${esc(a.label)}</span>
+      <span>${getMitreBadge(a)}</span>
+      <span>${esc(a.confidence)}</span>
+      <span class="alert-ts">${esc(a.timestamp)}</span>
+    </div>
+  `).join('');
+}
+
+function renderSources(sources) {
+  const el  = document.getElementById('top-sources');
+  if (!sources.length) {
+    el.innerHTML = '<div class="no-alerts" style="padding:20px;font-size:11px;">No threats yet</div>';
+    return;
+  }
+  const maxCnt = Math.max(...sources.map(s => s.count), 1);
+  el.innerHTML = sources.map(s => `
+    <div class="source-row">
+      <span class="source-ip">${esc(s.ip)}</span>
+      <div class="source-bar-wrap">
+        <div class="source-bar" style="width:${(s.count/maxCnt*100).toFixed(1)}%"></div>
+      </div>
+      <span class="source-cnt">${s.count}</span>
+    </div>
+  `).join('');
+}
+
+// ── XAI Panel ────────────────────────────────────────────────────────────────
+function showXAI(alertId, explanation, mitre) {
+  const panel   = document.getElementById('xai-panel');
+  const content = document.getElementById('xai-content');
+
+  if (!explanation || !explanation.top_features) {
+    content.innerHTML = '<p style="color:var(--muted)">No explanation available.</p>';
+    panel.classList.add('open');
+    return;
+  }
+
+  const maxPct  = Math.max(...explanation.top_features.map(f => f.pct), 1);
+  const rows    = explanation.top_features.map(f => `
+    <div class="xai-feat-row">
+      <div class="xai-feat-name">
+        <span>${esc(f.name)}</span>
+        <span>
+          <span style="color:var(--muted)">= ${f.value}</span>&nbsp;&nbsp;
+          <span class="xai-feat-pct">${f.pct}%</span>
+          &nbsp;<span style="font-size:10px;color:var(--muted)">${esc(f.direction)}</span>
+        </span>
+      </div>
+      <div class="xai-bar-wrap">
+        <div class="xai-bar ${f.shap_value > 0 ? 'risk' : 'safe'}"
+             style="width:${(f.pct / maxPct * 100).toFixed(1)}%"></div>
+      </div>
+    </div>
+  `).join('');
+
+  content.innerHTML = `
+    <p style="font-size:11px;color:var(--muted);margin-bottom:14px">
+      Method: <span style="color:var(--accent)">${esc(explanation.method ?? 'SHAP')}</span>
+      &nbsp;·&nbsp; Alert ID: <span style="font-family:var(--font-mono)">${esc(alertId)}</span>
+    </p>
+    ${rows}
+    <div class="xai-summary">${esc(explanation.summary ?? '')}</div>
+    ${buildMitrePanel(mitre)}
+  `;
+  panel.classList.add('open');
+}
+
+function closeXAI() {
+  document.getElementById('xai-panel').classList.remove('open');
+}
+document.getElementById('xai-panel').addEventListener('click', e => {
+  if (e.target === document.getElementById('xai-panel')) closeXAI();
+});
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+function getMitreBadge(alert) {
+  const b = alert.mitre_badge;
+  if (!b || !b.technique_id || b.technique_id === 'N/A') {
+    return '<span style="color:var(--muted);font-size:9px">—</span>';
+  }
+  return `<a class="mitre-badge"
+             href="${esc(b.url)}"
+             target="_blank"
+             title="${esc(b.technique_name)} — ${esc(b.tactic)}"
+             onclick="event.stopPropagation()"
+             style="color:${esc(b.colour)};border-color:${esc(b.colour)}40;background:${esc(b.colour)}18">
+            ${esc(b.technique_id)}
+          </a>`;
+}
+
+// Add MITRE panel to XAI popup
+function buildMitrePanel(mitre) {
+  if (!mitre || !mitre.primary_technique) return '';
+  const pt = mitre.primary_technique;
+  const subs = (pt.sub_techniques || []).slice(0, 3).map(s =>
+    `<div style="margin-top:6px;padding:6px 10px;background:rgba(14,165,233,.06);
+                border-radius:4px;border-left:2px solid var(--accent)">
+       <div style="font-size:9px;font-family:var(--font-mono);color:var(--accent)">${esc(s.id)}</div>
+       <div style="font-size:9px;font-weight:700;color:var(--text)">${esc(s.name)}</div>
+       <div style="font-size:8.5px;color:var(--muted)">${esc(s.desc)}</div>
+     </div>`
+  ).join('');
+  const mits = (pt.mitigations || []).slice(0, 3).map(m =>
+    `<div style="font-size:9px;color:var(--muted);margin-top:3px">• ${esc(m)}</div>`
+  ).join('');
+
+  return `
+    <div style="margin-top:16px;padding:12px;background:rgba(14,165,233,.06);
+                border:1px solid var(--border);border-radius:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:6px">
+        🎯  MITRE ATT&amp;CK Mapping
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:10px;padding:2px 8px;background:rgba(239,68,68,.15);
+                     color:#ef4444;border-radius:4px;font-family:var(--font-mono);
+                     font-weight:700">${esc(pt.id)}</span>
+        <span style="font-size:10px;color:var(--text);font-weight:700">${esc(pt.name)}</span>
+        <span style="font-size:9px;color:var(--muted)">Tactic: ${esc(pt.tactic)}</span>
+      </div>
+      <div style="font-size:9.5px;color:var(--muted);margin-bottom:8px">${esc(pt.desc)}</div>
+      ${subs ? '<div style="font-size:9px;font-weight:700;color:var(--muted);margin-bottom:4px">Sub-Techniques:</div>' + subs : ''}
+      ${mits ? '<div style="font-size:9px;font-weight:700;color:var(--muted);margin-top:8px;margin-bottom:2px">Mitigations:</div>' + mits : ''}
+      <div style="margin-top:8px">
+        <a href="${esc(pt.url)}" target="_blank"
+           style="font-size:9px;color:var(--accent);text-decoration:none">
+          🔗 View on attack.mitre.org →
+        </a>
+      </div>
+    </div>`;
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
