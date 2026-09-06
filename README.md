@@ -115,7 +115,7 @@ Network Traffic (Scapy live / Simulation)
   │                           │
   │  Isolation Forest         │──── zero-day anomaly detection 
   │                           │
-  |  modern_detector.py       │──── ransomware · encrypted_c2 · dga (100%)
+  │  modern_detector.py       │──── ransomware · encrypted_c2 · dga (100%)
   └───────────────────────────┘
            │  {label, severity, confidence, anomaly_score}
            ▼
@@ -223,7 +223,7 @@ python main.py run --port 8080
 
 ## 📊 Results
 
-### Model Performance on NSL-KDD (99.04% overall accuracy)
+### Classic Model — NSL-KDD (99.04% overall accuracy)
 
 Trained on 125,973 real records + 3,400 synthetic samples for
 underrepresented classes. Test set: 25,000+ records.
@@ -240,10 +240,16 @@ underrepresented classes. Test set: 25,000+ records.
 | web_attack | 1.000 | 1.000 | 1.000 | 800 (synthetic) |
 | infiltration | 0.984 | 0.971 | 0.977 | 800 (hybrid) |
 | exfiltration | 0.860 | 0.864 | 0.862 | 800 (hybrid) |
+| **Overall** | — | — | **99.04%** | ~129,000 |
+
+### Modern Threat Detector — 100% accuracy (8 behavioural features)
+
+| Attack Class | F1-Score | Key Detection Features |
+|---|---|---|
 | ransomware | 1.000 | Synthetic (smb_lateral_score + payload_entropy) |
 | encrypted_c2 | 1.000 | Synthetic (beacon_score + tls features) |
 | dga | 1.000 | Synthetic (dns_entropy + nxdomain_rate) |
-| **Overall** | **100%** | 8 behavioural features |
+| **Overall** | **100%** | Trained on 12,000 synthetic samples |
 
 ### Hybrid Training Strategy
 
@@ -368,7 +374,7 @@ Last:   Recommendations — 5 actionable remediation steps
 
 | Dataset | Year | Records | Classes | Source |
 |---|---|---|---|---|
-| NSL-KDD | 1999 | 125,973 | 5 → 10 (remapped) | GitHub mirror |
+| NSL-KDD | 1999 | 125,973 | 5 → 13 (remapped) | GitHub mirror |
 | UNSW-NB15 | 2015 | 175,341 | 9 | UNSW Canberra |
 | CIC-IDS-2017 | 2017 | 2,830,743 | 14 | UNB Canada |
 
@@ -496,6 +502,8 @@ not own or administer.
 - Simulation mode works without admin privileges
 - For live packet capture on Windows: install [Npcap](https://npcap.com) and run as Administrator
 - Dashboard opens at `http://localhost:5000` in any browser
+
+---
 
 ## 📜 License
 
