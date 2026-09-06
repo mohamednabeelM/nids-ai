@@ -7,11 +7,11 @@
 ![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=for-the-badge&logo=flask&logoColor=white)
 ![MITRE](https://img.shields.io/badge/MITRE_ATT%26CK-v14-red?style=for-the-badge)
 ![Accuracy](https://img.shields.io/badge/Accuracy-99.04%25-brightgreen?style=for-the-badge)
-![Classes](https://img.shields.io/badge/Attack_Classes-10-orange?style=for-the-badge)
+![Classes](https://img.shields.io/badge/Attack_Classes-13-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **A production-ready, open-source Network Intrusion Detection System
-with 10 attack classes, MITRE ATT&CK mapping, Explainable AI (SHAP),
+with 13 attack classes, MITRE ATT&CK mapping, Explainable AI (SHAP),
 real-time web dashboard, and automated forensic PDF reports**
 
 [Features](#-features) •
@@ -30,12 +30,12 @@ real-time web dashboard, and automated forensic PDF reports**
 ## 📌 Overview
 
 NIDS is a complete **cybersecurity monitoring platform** that detects
-10 distinct network attack types in real time using a dual ML ensemble,
+13 distinct network attack types in real time using a dual ML ensemble,
 explains every detection using **SHAP (Explainable AI)**, maps each alert
 to **MITRE ATT&CK Framework v14** techniques, and automatically generates
 professional **forensic PDF reports**.
 
-> Built as a **Final Year Project** for B.E. Computer Science
+> Built as a **Cyber Security Project** for B.E. Computer Science
 > (Cybersecurity Specialisation) at SRM Madurai College for Engineering
 > and Technology, 2023–2027.
 
@@ -381,6 +381,7 @@ nids-ai/
 │   ├── trainer.py             # 10-class training + hybrid data (737 lines)
 │   ├── detector.py            # Real-time dual-model inference (78 lines)
 │   ├── explainer.py           # SHAP XAI explanations (123 lines)
+    ├── modern_detector.py     # Modern Threat Detector — ransomware · encrypted_c2 · dga
 │   └── models/                # Saved .pkl files (git-ignored)
 │
 ├── core/                      # Network Capture Pipeline
