@@ -20,16 +20,6 @@ import platform
 import threading
 from datetime import datetime
 
-# ── Windows UTF-8 bootstrap ───────────────────────────────────────────────────
-# Rich uses Unicode box-drawing / emoji that CP1252 can't encode.
-# Re-launch with PYTHONUTF8=1 when not already set so the whole
-# process (including Rich's legacy Windows renderer) uses UTF-8.
-if sys.platform == "win32" and os.environ.get("PYTHONUTF8") != "1":
-    import subprocess
-    env = {**os.environ, "PYTHONUTF8": "1"}
-    result = subprocess.run([sys.executable] + sys.argv, env=env)
-    sys.exit(result.returncode)
-
 # ── Rich terminal output ───────────────────────────────────────────────────────
 from rich.console import Console
 from rich.panel   import Panel
@@ -244,7 +234,7 @@ def cmd_run(args):
         dash_thread = threading.Thread(
             target=dash_app.run,
             kwargs={"host":"0.0.0.0","port":port,
-                    "debug":False,"ssl":use_ssl},
+                    "debug":False},
             daemon=True,
         )
         dash_thread.start()
@@ -349,4 +339,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+       main()
+    except KeyboardInterrupt:
+       pass

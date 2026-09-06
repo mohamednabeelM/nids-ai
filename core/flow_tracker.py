@@ -144,7 +144,7 @@ class FlowTracker:
 
     def collect_expired(self) -> list[tuple[Flow, dict]]:
         """Return and remove all expired flows as (flow, features) pairs."""
-        expired_keys = [k for k, f in self._flows.items() if f.is_expired()]
+        expired_keys = [k for k, f in list(self._flows.items()) if f.is_expired()]
         results = []
         for key in expired_keys:
             flow = self._flows.pop(key)
