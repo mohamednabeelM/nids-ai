@@ -110,13 +110,13 @@ Network Traffic (Scapy live / Simulation)
   core/flow_tracker.py ──── groups by (src_ip, dst_ip, src_port, dst_port, proto)
            │  24 ML features per expired flow
            ▼
-  ┌──────────────────────────┐
-  │  Classic RF (24 features)│──── 10 classic attack classes (99.04%)
-  │                          │
-  │  Isolation Forest        │──── zero-day anomaly detection 
-  │  			     │
-  |  modern_detector.py      │──── ransomware · encrypted_c2 · dga (100%)
-  └──────────────────────────┘
+  ┌────────────────────┐
+  │  Classic RF (24 features) │──── 10 classic attack classes (99.04%)
+  │                           │
+  │  Isolation Forest         │──── zero-day anomaly detection 
+  │  			      │
+  |  modern_detector.py       │──── ransomware · encrypted_c2 · dga (100%)
+  └────────────────────┘
            │  {label, severity, confidence, anomaly_score}
            ▼
   ml/explainer.py (SHAP) ──── per-alert feature contribution ranking
