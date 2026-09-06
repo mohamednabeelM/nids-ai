@@ -114,7 +114,7 @@ Network Traffic (Scapy live / Simulation)
   │  Classic RF (24 features) │──── 10 classic attack classes (99.04%)
   │                           │
   │  Isolation Forest         │──── zero-day anomaly detection 
-  │  		        │
+  │                           │
   |  modern_detector.py       │──── ransomware · encrypted_c2 · dga (100%)
   └───────────────────────────┘
            │  {label, severity, confidence, anomaly_score}
