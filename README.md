@@ -144,7 +144,7 @@ every 1 sec     on session end
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/nids-ai.git
+git clone https://github.com/mohamednabeelM/nids-ai.git
 cd nids-ai
 
 # 2. Install all dependencies
@@ -496,12 +496,12 @@ MIT License — free to use, modify, and distribute with attribution.
 
 ## 👤 Author
 
-**Mohamed**
+**Mohamed Nabeel**
 B.E. Computer Science — Cybersecurity Specialisation
 SRM Madurai College for Engineering and Technology · 2023–2027
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat&logo=linkedin)](https://linkedin.com/in/YOUR_PROFILE)
-[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/YOUR_USERNAME)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat&logo=linkedin)](https://linkedin.com/in/mohamed-nabeel-510927367)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/mohamednabeelM/nids-ai)
 
 ---
 
