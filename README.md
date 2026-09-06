@@ -496,7 +496,7 @@ MIT License — free to use, modify, and distribute with attribution.
 
 ## 👤 Author
 
-**Mohamed Nabeel**
+**Mohamed Nabeel.M**
 B.E. Computer Science — Cybersecurity Specialisation
 SRM Madurai College for Engineering and Technology · 2023–2027
 
