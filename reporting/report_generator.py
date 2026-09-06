@@ -129,10 +129,31 @@ class NIDSReportGenerator:
 
     def _summary(self, s):
         stats = self.data.get("stats", {})
+        alerts = self.data.get("alerts", [])
+        
+        # Dynamically calculate accurate flow counts from alerts list if available
+        if alerts:
+            total_flows = len(alerts)
+            clean_flows = sum(1 for a in alerts if a.get("label", "").lower() == "normal" or a.get("severity", "").upper() == "LOW")
+            crit = sum(1 for a in alerts if a.get("severity", "").upper() == "CRITICAL")
+            high = sum(1 for a in alerts if a.get("severity", "").upper() == "HIGH")
+            medium = sum(1 for a in alerts if a.get("severity", "").upper() == "MEDIUM")
+            low = sum(1 for a in alerts if a.get("severity", "").upper() == "LOW")
+            
+            clean_pct = (clean_flows / total_flows * 100) if total_flows > 0 else 0.0
+            threat_pct = 100.0 - clean_pct
+        else:
+            total_flows = stats.get("total_flows", 0)
+            clean_flows = stats.get("clean", 0)
+            crit = stats.get("critical", 0)
+            high = stats.get("high", 0)
+            medium = stats.get("medium", 0)
+            low = stats.get("low", 0)
+            clean_pct = stats.get("clean_pct", 0)
+            threat_pct = stats.get("threat_pct", 0)
+
         story = [Paragraph("Executive Summary", s["Section"])]
 
-        crit = stats.get("critical", 0)
-        high = stats.get("high", 0)
         verdict = (
             "⚠️  THREATS DETECTED — Immediate investigation required."
             if (crit + high) > 0
@@ -143,14 +164,14 @@ class NIDSReportGenerator:
 
         rows = [
             ["Metric", "Value"],
-            ["Total Flows Analysed",    str(stats.get("total_flows",0))],
-            ["Clean Flows",             str(stats.get("clean",0))],
+            ["Total Flows Analysed",    str(total_flows)],
+            ["Clean Flows",             str(clean_flows)],
             ["🔴 Critical Threats",     str(crit)],
             ["🟠 High Threats",         str(high)],
-            ["🔵 Medium Threats",       str(stats.get("medium",0))],
-            ["🟢 Low Threats",          str(stats.get("low",0))],
-            ["Clean Traffic %",         f"{stats.get('clean_pct',0):.1f}%"],
-            ["Threat Traffic %",        f"{stats.get('threat_pct',0):.1f}%"],
+            ["🔵 Medium Threats",       str(medium)],
+            ["🟢 Low Threats",          str(low)],
+            ["Clean Traffic %",         f"{clean_pct:.1f}%"],
+            ["Threat Traffic %",        f"{threat_pct:.1f}%"],
             ["Session Duration",        stats.get("uptime","N/A")],
             ["ML Model Accuracy",       stats.get("model_accuracy","N/A")],
         ]

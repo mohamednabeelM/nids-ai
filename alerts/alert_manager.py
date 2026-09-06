@@ -127,15 +127,18 @@ class AlertManager:
 
     def dashboard_stats(self) -> dict:
         total = max(self._stats["total_flows"], 1)
+        # Count both explicit "CLEAN" and "LOW" severity (normal) flows as clean traffic
+        clean_flows = self._stats["clean"] + self._stats.get("LOW", 0)
+        
         return {
             "total_flows":     self._stats["total_flows"],
-            "clean":           self._stats["clean"],
+            "clean":           clean_flows,
             "critical":        self._stats.get("CRITICAL", 0),
             "high":            self._stats.get("HIGH", 0),
             "medium":          self._stats.get("MEDIUM", 0),
             "low":             self._stats.get("LOW", 0),
-            "threat_pct":      round((total - self._stats["clean"]) / total * 100, 1),
-            "clean_pct":       round(self._stats["clean"] / total * 100, 1),
+            "threat_pct":      round((total - clean_flows) / total * 100, 1),
+            "clean_pct":       round(clean_flows / total * 100, 1),
             "packets_per_sec": len(self._pkt_ts_window),
             "attack_types":    dict(self._attack_counts),
             "top_sources":     self._top_sources(5),
