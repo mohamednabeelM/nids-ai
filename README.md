@@ -217,9 +217,6 @@ sudo python main.py run --mode live --iface eth0
 # Custom dashboard port
 python main.py run --port 8080
 
-# HTTPS mode (no browser security warning)
-python setup_ssl.py          # run once to generate certificate
-python main.py run --ssl     # opens at https://localhost:5000
 ```
 
 ---
@@ -243,7 +240,10 @@ underrepresented classes. Test set: 25,000+ records.
 | web_attack | 1.000 | 1.000 | 1.000 | 800 (synthetic) |
 | infiltration | 0.984 | 0.971 | 0.977 | 800 (hybrid) |
 | exfiltration | 0.860 | 0.864 | 0.862 | 800 (hybrid) |
-| **Overall** | — | — | **99.04%** | **~129,000** |
+| ransomware | 1.000 | Synthetic (smb_lateral_score + payload_entropy) |
+| encrypted_c2 | 1.000 | Synthetic (beacon_score + tls features) |
+| dga | 1.000 | Synthetic (dns_entropy + nxdomain_rate) |
+| **Overall** | **100%** | 8 behavioural features |
 
 ### Hybrid Training Strategy
 
