@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-main.py — NIDS: AI-Powered Network Intrusion Detection System
-Author  :  Mohamed Nabeel.M
-Degree  :  B.E. Computer Science (Cybersecurity), 2023–2027
-GitHub  : https://github.com/mohamednabeelM/nids-ai
+# main.py — NIDS: AI-Powered Network Intrusion Detection System
+# Author  :  Mohamed Nabeel.M
+# Degree  :  B.E. Computer Science (Cybersecurity), 2023–2027
+# GitHub  : https://github.com/mohamednabeelM/nids-ai
+# License : MIT License (see LICENSE.txt)
 ============================================================
 Usage:
   python main.py train                     # Train ML models
