@@ -459,6 +459,7 @@ nids-ai/
 
 - Python **3.11** or higher
 - Windows 10/11 / Linux / macOS
+- **Windows users:** Run `python main.py run` directly — no admin needed for simulation mode
 - Root / Administrator for live capture
   (simulation mode works without elevated privileges)
 - 500 MB disk space (models + dataset)
@@ -474,6 +475,19 @@ not own or administer.
 
 ---
 
+## ✅ Tested On
+
+| Platform | Python | Status |
+|---|---|---|
+| Windows 10/11 | 3.11+ | ✅ Working |
+| Ubuntu 22.04 | 3.11+ | ✅ Working |
+| macOS | 3.11+ | ✅ Working |
+
+### Windows Notes
+- Simulation mode works without admin privileges
+- For live packet capture on Windows: install [Npcap](https://npcap.com) and run as Administrator
+- Dashboard opens at `http://localhost:5000` in any browser
+
 ## 📜 License
 
 MIT License — free to use, modify, and distribute with attribution.
@@ -482,12 +496,12 @@ MIT License — free to use, modify, and distribute with attribution.
 
 ## 👤 Author
 
-**Mohamed**
+**Mohamed Nabeel.M**
 B.E. Computer Science — Cybersecurity Specialisation
 SRM Madurai College for Engineering and Technology · 2023–2027
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat&logo=linkedin)](https://linkedin.com/in/YOUR_PROFILE)
-[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/YOUR_USERNAME)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat&logo=linkedin)](https://linkedin.com/in/mohamed-nabeel-510927367)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/mohamednabeelM/nids-ai)
 
 ---
 

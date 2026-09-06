@@ -1,4 +1,9 @@
 """
+ NIDS — AI-Powered Network Intrusion Detection System
+# Author  : Mohamed Nabeel.M
+# Degree  : B.E. Computer Science (Cybersecurity), 2023–2027
+# GitHub  : https://github.com/mohamednabeelM/nids-ai
+
 ml/trainer.py — Trains the NIDS ML pipeline on NSL-KDD dataset
 or synthetic data when the dataset is unavailable.
 
