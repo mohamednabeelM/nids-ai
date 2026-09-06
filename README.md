@@ -46,8 +46,8 @@ professional **forensic PDF reports**.
 | ML-based detection | ❌ | ❌ | ✅ | ✅ |
 | Zero-day detection | ❌ | ❌ | ✅ | ✅ |
 | Explainable AI (SHAP) | ❌ | ❌ | ❌ | ✅ |
-| MITRE ATT&CK mapping | ❌ | ❌ | Partial | ✅ **19 techniques** |
-| 10 granular attack classes | ❌ | ❌ | ✅ | ✅ |
+| MITRE ATT&CK mapping | ❌ | ❌ | Partial | ✅ **22 techniques** |
+| 13 granular attack classes | ❌ | ❌ | ✅ | ✅ |
 | Built-in live dashboard | ❌ | ❌ | ✅ | ✅ |
 | Forensic PDF report | ❌ | ❌ | ✅ | ✅ |
 | Open source & free | ✅ | ✅ | ❌ | ✅ |
@@ -60,10 +60,11 @@ professional **forensic PDF reports**.
 | Feature | Description |
 |---|---|
 | 🤖 **Dual ML Ensemble** | Random Forest (200 trees) + Isolation Forest — known attacks + zero-days |
-| 🎯 **10 Attack Classes** | DoS · DDoS · Port Scan · Vuln Scan · Brute Force · Exploit · Web Attack · Infiltration · Exfiltration · Normal |
+| 🎯 **13 Attack Classes** | DoS · DDoS · Port Scan · Vuln Scan · Brute Force · Exploit · Web Attack · Infiltration · Exfiltration · Ransomware · Encrypted C2 · DGA · Normal |
+| 🔬 **Modern Threat Detector** | Separate 8-feature model detects Ransomware · Encrypted C2 (Cobalt Strike) · DGA with 100% accuracy |
 | 🔍 **Explainable AI** | SHAP TreeExplainer shows exactly which features triggered each alert |
-| 🗺️ **MITRE ATT&CK** | 19 techniques mapped across 7 tactics — clickable badges on every alert |
-| 📊 **Live Dashboard** | Real-time browser UI — traffic charts, threat pulse, 10-class donut, alert feed |
+| 🗺️ **MITRE ATT&CK** | 22 techniques mapped across 7 tactics — clickable badges on every alert |
+| 📊 **Live Dashboard** | Real-time browser UI — traffic charts, threat pulse, 13-class donut, alert feed |
 | ⚡ **WebSocket Push** | Flask-SocketIO broadcasts every second — no page refresh needed |
 | 📡 **Dual Capture Mode** | Scapy live capture OR built-in realistic traffic simulation with attack injection |
 | 📑 **Forensic PDF Report** | 6-page auto-generated report with SHAP + MITRE + recommendations |
@@ -76,7 +77,7 @@ professional **forensic PDF reports**.
 
 ## 🎯 Attack Classes
 
-This project uses a **10-class modern taxonomy** — not the outdated 4-class
+This project uses a **13-class modern taxonomy** — not the outdated 4-class
 NSL-KDD grouping. Each class maps to real-world security team language:
 
 | Class | Severity | Description | MITRE Technique | Examples |
@@ -91,6 +92,9 @@ NSL-KDD grouping. Each class maps to real-world security team language:
 | `web_attack` | 🟠 HIGH | SQL injection, XSS | T1190 | sqlattack, XSS payloads |
 | `infiltration` | 🔴 CRITICAL | Backdoor, C2 channel | T1071 | multihop, httptunnel |
 | `exfiltration` | 🔴 CRITICAL | Large data theft | T1041 | warezclient, FTP upload |
+| `ransomware`   | 🔴 CRITICAL | Encrypts files after SMB lateral movement | T1486 | LockBit, WannaCry, REvil |
+| `encrypted_c2` | 🔴 CRITICAL | Covert beaconing over TLS/HTTPS | T1573 | Cobalt Strike, Mettle |
+| `dga`          | 🟠 HIGH     | Domain Generation Algorithm abuse | T1568 | Emotet, Conficker |
 
 ---
 
@@ -106,12 +110,13 @@ Network Traffic (Scapy live / Simulation)
   core/flow_tracker.py ──── groups by (src_ip, dst_ip, src_port, dst_port, proto)
            │  24 ML features per expired flow
            ▼
-  ┌────────────────────────┐
-  │  ml/trainer.py models  │
-  │                        │
-  │  Random Forest (n=200) │──── classifies into 10 attack classes
-  │  Isolation Forest      │──── flags zero-day anomalies
-  └────────────────────────┘
+  ┌──────────────────────────┐
+  │  Classic RF (24 features)│──── 10 classic attack classes (99.04%)
+  │                          │
+  │  Isolation Forest        │──── zero-day anomaly detection 
+  │  			     │
+  |  modern_detector.py      │──── ransomware · encrypted_c2 · dga (100%)
+  └──────────────────────────┘
            │  {label, severity, confidence, anomaly_score}
            ▼
   ml/explainer.py (SHAP) ──── per-alert feature contribution ranking
@@ -249,7 +254,7 @@ automatically supplements with synthetic data:
 MIN_SAMPLES = 800 per class
 Missing classes (DDoS, Web Attack) → 800 synthetic samples added
 Underrepresented (Brute Force: 61, Exploit: 52) → boosted to 800
-Result: all 10 classes have adequate representation
+Result: all 13 classes have adequate representation
 ```
 
 ---
@@ -269,8 +274,11 @@ Every alert is automatically mapped to MITRE ATT&CK Framework v14:
 | web_attack | Initial Access (TA0001) | T1190 Exploit Public App | T1059, T1210 |
 | infiltration | Command & Control (TA0011) | T1071 App Layer Protocol | T1105, T1021, T1133 |
 | exfiltration | Exfiltration (TA0010) | T1041 Exfil over C2 | T1048, T1567 |
+| ransomware   | Impact (TA0040)      | T1486 Data Encrypted for Impact | T1490, T1573, T1041 |
+| encrypted_c2 | C2 (TA0011)          | T1573 Encrypted Channel         | T1071, T1572, T1008 |
+| dga          | C2 (TA0011)          | T1568 Dynamic Resolution        | T1572, T1571        |
 
-**Total: 19 techniques across 7 tactics — shown as clickable badges on every alert row**
+**Total: 22 techniques across 7 tactics — shown as clickable badges on every alert row**
 
 ---
 
@@ -304,7 +312,7 @@ No other free IDS tool provides this level of explanation per alert.
 |---|---|
 | **Traffic Chart** | 60-second rolling line chart — normal vs threat flows |
 | **Threat Pulse** | Animated radar rings — blue=secure, amber=high, red=critical |
-| **Attack Donut** | 10-segment real-time distribution across all attack classes |
+| **Attack Donut** | 13-segment real-time distribution across all attack classes |
 | **Alert Feed** | Live scrollable table with MITRE T-ID badge on every row |
 | **XAI Popup** | Click any alert → SHAP feature bars + full MITRE panel |
 | **Top Attackers** | Ranked source IP table with alert counts |
@@ -352,7 +360,7 @@ Last:   Recommendations — 5 actionable remediation steps
 
 | Library | Version | Purpose |
 |---|---|---|
-| Chart.js | 4.4.1 | Traffic line chart + 10-class donut |
+| Chart.js | 4.4.1 | Traffic line chart + 13-class donut |
 | Socket.IO | 4.7.2 | WebSocket client — live updates |
 | HTML5/CSS3 | — | Dark cybersecurity UI (CSS variables) |
 
@@ -378,19 +386,19 @@ nids-ai/
 ├── .gitignore                 # Excludes .pkl, .pem, data files
 │
 ├── ml/                        # Machine Learning Engine
-│   ├── trainer.py             # 10-class training + hybrid data (737 lines)
-│   ├── detector.py            # Real-time dual-model inference (78 lines)
-│   ├── explainer.py           # SHAP XAI explanations (123 lines)
-    ├── modern_detector.py     # Modern Threat Detector — ransomware · encrypted_c2 · dga
-│   └── models/                # Saved .pkl files (git-ignored)
+│   ├── trainer.py             # Classic 10-class training, 24 features (737 lines)
+│   ├── detector.py            # Two-model cascade inference engine (99 lines)
+│   ├── explainer.py           # SHAP XAI explanations per alert (123 lines)
+    ├── modern_detector.py     # Ransomware · Encrypted C2 · DGA detector (181 lines)
+│   └── models/                # Saved .pkl files — classic + modern (git-ignored)
 │
 ├── core/                      # Network Capture Pipeline
 │   ├── packet_capture.py      # Scapy live + simulation (239 lines)
 │   └── flow_tracker.py        # Packets → flows → 24 features (189 lines)
 │
 ├── mitre/                     # MITRE ATT&CK Framework
-│   ├── mitre_data.py          # 19 techniques, 7 tactics (832 lines)
-│   └── mitre_mapper.py        # 10-class mapping engine (121 lines)
+│   ├── mitre_data.py          # 22 techniques, 7 tactics (832 lines)
+│   └── mitre_mapper.py        # 13-class mapping engine (121 lines)
 │
 ├── alerts/
 │   └── alert_manager.py       # Alert store + live statistics (161 lines)
@@ -407,7 +415,7 @@ nids-ai/
 └── reports/                   # Generated PDFs (git-ignored)
 ```
 
-**Total: 20 Python files · 3,771 lines · 1 HTML file (890 lines)**
+**Total: 21 Python files · 3,952 lines · 1 HTML file (890 lines)**
 
 ---
 
@@ -427,9 +435,9 @@ nids-ai/
                        byte_rate, SYN/FIN/RST ratios, count,
                        same_srv_rate, port, and 14 more
 
-4. ML Detection      Random Forest (n=200) → one of 10 attack classes
-                     Isolation Forest → anomaly score (zero-day flag)
-                     Ensemble: if RF=normal + IF flags → port_scan
+4. ML Detection      Classic RF (24 features) → one of 10 classic classes (99.04%)
+                     Isolation Forest → zero-day anomaly detection
+                     Modern Detector (8 features) → ransomware · C2 · DGA (100%)
 
 5. SHAP Explanation  TreeExplainer ranks top 6 features:
                      "packet_rate = 8944 (62.3% risk contribution)"
