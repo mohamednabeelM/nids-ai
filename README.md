@@ -70,8 +70,7 @@ professional **forensic PDF reports**.
 | 📑 **Forensic PDF Report** | 6-page auto-generated report with SHAP + MITRE + recommendations |
 | 🗄️ **3 Datasets** | NSL-KDD · UNSW-NB15 · CIC-IDS-2017 — auto format detection |
 | 🔀 **Hybrid Training** | Real NSL-KDD data + synthetic boost for underrepresented classes |
-| 🔒 **HTTPS Support** | Self-signed SSL via `setup_ssl.py` — removes browser security warning |
-| 🆓 **100% Free** | No paid APIs, no subscriptions, no licences required |
+| 🆓 **100% Free** | No paid APIs, no subscriptions, external services required |
 
 ---
 
@@ -359,7 +358,7 @@ Last:   Recommendations — 5 actionable remediation steps
 | flask-socketio | 5.3+ | Real-time WebSocket push |
 | eventlet | 0.33+ | Async mode for SocketIO |
 | reportlab | 4.0+ | Forensic PDF generation |
-| cryptography | 41.0+ | Self-signed SSL certificate |
+| cryptography | 41.0+ |
 | rich | 13.0+ | Coloured terminal output |
 
 ### Frontend (Browser — no build step)
@@ -386,7 +385,6 @@ Last:   Recommendations — 5 actionable remediation steps
 nids-ai/
 ├── main.py                    # CLI — train / run / report (309 lines)
 ├── download_dataset.py        # Auto-downloads 3 datasets (264 lines)
-├── setup_ssl.py               # HTTPS certificate generator (144 lines)
 ├── requirements.txt           # All dependencies
 ├── README.md                  # This file
 ├── .gitignore                 # Excludes .pkl, .pem, data files
@@ -395,7 +393,7 @@ nids-ai/
 │   ├── trainer.py             # Classic 10-class training, 24 features (737 lines)
 │   ├── detector.py            # Two-model cascade inference engine (99 lines)
 │   ├── explainer.py           # SHAP XAI explanations per alert (123 lines)
-    ├── modern_detector.py     # Ransomware · Encrypted C2 · DGA detector (181 lines)
+│   ├── modern_detector.py     # Ransomware · Encrypted C2 · DGA detector (181 lines)
 │   └── models/                # Saved .pkl files — classic + modern (git-ignored)
 │
 ├── core/                      # Network Capture Pipeline
